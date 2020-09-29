@@ -43,6 +43,39 @@ bool Windower::has_next_window(){
         return has_next_window_circular();
     }
     if (current_start == current_stop-min_window_size+1 && current_stop == current_sequence->end()-1){
+
+        /*
+        NOTE: We do not have a next window when ...
+
+        The window start is equal to the (window end - window size)
+
+        -----|--------------------|------  The window
+
+        min window size is in fact the min window size so windows can be larger
+        which in term seems to effect iteration and window creation somewhere
+        else (RUNTIME!!!)
+
+        Is there some op for memoization / caching to some degree?
+        Is there some connection between
+
+        Window A: ABCD | EFGHIJKL | MNOP
+
+        and 
+
+        Window B: ABCDE | FGHIJKL | MNOP
+
+        Or in otherwords does window FGHIJKL + E == EFGHIJKL
+
+        If so then we can dynamic program the shit out of this but I'm not
+        actually sure that is how things are working out
+
+        *EH
+
+
+        */
+
+
+
         return false;
     }
     else
@@ -58,23 +91,67 @@ bool Windower::has_next_window_circular(){
         return true;
 }
 
-void Windower::next_window_from_all_windows(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
+//change function type to return int *EH
+int Windower::next_window_from_all_windows(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
     //if (!has_next_window()){ //safety check to make sure the next window exists
     //    throw WindowerException(); //throw exception?
     //}
+    int flag = 0;
     if (is_circular){
         return next_window_from_all_windows_circular(start,stop);
     }
-    if (stop < current_sequence->end()-1){
+    if (stop < current_sequence->end()-1){  // Move the end further along but keep same start *EH
         ++current_stop;
+        // flag that we have not yet moved to new block
     }
     else{ //if (start < current_sequence->end()-min_window_size){
+        // We hit the current stop so we need to increment the start by one
+        // And move the next stop by 1 min_window_size unit along the sequence
         ++current_start;
         current_stop = current_start + min_window_size-1;
+        flag = 1;
     }
     start = current_start;
     stop = current_stop;
+    return flag;
     //print_current_window();
+
+    /*
+    Think the above looks something like this
+
+    min_window_size = 3
+    start = 0 
+    stop = 2 (min_window_size - 1)
+
+    1. | A B C | D E
+
+    Increment current_stop (stop)
+
+    stop = 3
+
+    2. | A B C D | E
+
+    Increment current_stop (stop)
+
+    stop = 4
+
+    3. | A B C D E |
+
+    Increment current start
+
+    start = 1
+
+    stop = start (1) + min_window_size (3) -1 = 3
+
+    4. A | B C D | E
+
+    ...
+
+    *EH 
+
+    */
+
+
     return;
 }
 

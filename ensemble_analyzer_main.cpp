@@ -9,7 +9,9 @@ int main(int argc, char* argv[]) {
     Simulation sim;
     Rloop_equilibrium_model model;
     bool sandbox = false;
+
     //process command line arguments
+
     sim.set_infile(argv[1]);
     sim.set_outfile(argv[2]);
     for (int i=3; i<argc; i++) {

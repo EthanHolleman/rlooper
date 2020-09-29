@@ -457,16 +457,16 @@ void Simulation::simulation_A(){ //some of this code might be migrated into new 
     write_bedfile_header(outfile5,"signal3_peaks_"+outfilename);
 
     bool eof = false;
-    if (models.size() < 1){
+    if (models.size() < 1){  // models is vector, could have multible models *EH
         //throw exception
     }
-    //do while !eof
+    //do while !eof  QUESTION: What is eof stand for in this context? *EH
     while(eof == false) {
-        //allocate new gene
+        //allocate new gene QUESTION: Are gene objects really genes always or interesting loci? *EH
         Gene *this_gene = new Gene();
-        this_gene->windower.set_min_window_size(minlength);
+        this_gene->windower.set_min_window_size(minlength);  //QUESTION Why are we accessing through a pointer? *EH
         //read gene
-        eof = this_gene->read_gene(infile);
+        eof = this_gene->read_gene(infile);  //NOTE: Gene is really just a fasta record in the infile *EH
         cout << "processing gene: " << this_gene->getName() << "...";
         //compute structures using models
         if (auto_domain_size){

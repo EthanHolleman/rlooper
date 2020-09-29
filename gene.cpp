@@ -163,8 +163,66 @@ void Gene::compute_structures(Model &model){
     //initializing the iterators ensures that the intial comparison in next_window_from_all_windows is not problematic
     std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
     windower.reset_window();
+
+    long double current_boltzmann;
+    long double current_free_energy;
+    
+    
+
+
     while (windower.has_next_window()){
+
+        int flag = windower.next_window_from_all_windows(start,stop);
+        // flag isnt going to work here because it is called in both
+        // cases we are interested in
+        // current start is increasing each time we need to reset the
+        // dynamic values
+
+
+
+        Structure temp;
+        temp.position.chromosome = position.chromosome;
+        temp.position.strand = position.strand;
+        temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
+        temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+
+        // below needs way of access step forward method and need to get the base
+        // pair characters into b_0 and b_1 variables
+        // this assumes the first structure in the block has already been crested
+        // and pushed back onto the rloop structure vector
+        temp.free_energy = rloop_structures[-1].free_energy + step_forward_bps(b_0, b_1)
+        
+        // below needs access to compute boltzman factor and T constant
+        temp.boltzmann_factor = compute_boltzman_factor(temp.free_energy, T)
+
+
+
+
+        // here need to do the actual calculations by refering to the last
+        // structures in some way
+        // how do we want to do that by the way is the though thing
+
+        // need to compute the first structure in this section of structs
+        // and then can use that one to calculate the rest
+
+        /*
+        if current_boltz and current_free energy are 0:
+            Means we started a new block (need signal for that)
+            Create the first structure like normal
+            Compute all other structures from the first one
+        */
+
+
+    }
+
+    while (windower.has_next_window()){  // Has next window? How many windows we talkin here? *EH
+
+
+
+    
         windower.next_window_from_all_windows(start,stop);
+        // QUESTION: Is this calculating all possible RLoop structs given a sequence? *EH
         Structure temp;
         //set the Loci of the structure using the gene's Loci
         temp.position.chromosome = position.chromosome;
@@ -172,11 +230,24 @@ void Gene::compute_structures(Model &model){
         temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
         temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
         //pass the structure and window boundaries to the model
+
+        /* NOTE: Looks like we are computing the bounds of possible R loop
+        structures here and storing them in temp. Then we use the model object
+        passed to this function to "compute_structure" which looks like it does
+        energy calculations for the structure.
+
+        When we push back the temp structure it will have the bounds and
+        associated energies (what those energies are not exactly sure at this
+        point)
+
+        *EH
+        */
+
         model.compute_structure(sequence,start,stop,temp);
         //push the now computed structure onto these_structures
         rloop_structures.push_back(temp); //need to make sure the default copy constructor is working properly
     }
-    ground_state_energy = model.ground_state_energy();
+    ground_state_energy = model.ground_state_energy();  // O(1)
 }
 
 void Gene::compute_structures_circular(Model &model){

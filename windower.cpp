@@ -43,7 +43,7 @@ bool Windower::has_next_window(){
         return has_next_window_circular();
     }
     if (current_start == current_stop-min_window_size+1 && current_stop == current_sequence->end()-1){
-
+    
         /*
         NOTE: We do not have a next window when ...
 
@@ -150,15 +150,13 @@ int Windower::next_window_from_all_windows(std::vector<char>::iterator& start, s
     *EH 
 
     */
-
-
-    return;
 }
 
-void Windower::next_window_from_all_windows_circular(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
+int Windower::next_window_from_all_windows_circular(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
     //if (!has_next_window()){ //safety check to make sure the next window exists
     //    throw WindowerException(); //throw exception?
     //}
+    int flag = 0;
     if (current_window_size < sequence_size){ //sequence length has not been reached
         if (current_stop == current_sequence->end()-1){ //boundary condition
             current_stop = current_sequence->begin();
@@ -178,8 +176,9 @@ void Windower::next_window_from_all_windows_circular(std::vector<char>::iterator
     }
     start = current_start;
     stop = current_stop;
+    flag = 1;
     //print_current_window();
-    return;
+    return flag;
 }
 
 long int Windower::get_current_start_offset(){

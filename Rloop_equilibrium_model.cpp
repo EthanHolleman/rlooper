@@ -205,6 +205,25 @@ void Rloop_equilibrium_model::compute_structure(vector<char>& sequence, const st
     structure.boltzmann_factor = compute_boltzmann_factor(structure.free_energy,T);
 }
 
+void Rloop_equilibrium_model::compute_structure(vector<char>& sequence, const std::vector<char>::iterator &start, const std::vector<char>::iterator &stop, Structure& previous_structure, Structure& current_structure){
+    std::vector<char>::iterator b_0;
+    //get boundaries of the sequence for this structure
+    long int m = find_distance(sequence, start, stop, current_structure); //need to make boundary aware, draw this value from windower
+    //compute the superhelicity term
+    if (!unconstrained) {
+        current_structure.free_energy = (2 * pow(M_PI, 2) * C * k * pow((alpha + m * A), 2)) / (4 * pow(M_PI, 2) * C + k * m);
+    }
+    //compute the base-pairing energy in a loop over the sequence in the boundary
+
+    // get last two bases of the current structure *EH
+
+    current_structure.free_energy = previous_structure.free_energy + step_forward_bps(stop-1, stop); // need two character iterators here
+
+    current_structure.boltzmann_factor = compute_boltzmann_factor(current_structure.free_energy,T);
+}
+
+
+
 void Rloop_equilibrium_model::compute_residuals(Structure &structure){
     structure.residual_linking_difference = ((4*pow(pi,2)*C) / (4*pow(pi,2)*C+k*structure.position.get_length())) * (alpha+structure.position.get_length()*A);
     structure.residual_twist = ((2*pi*k) / (4*pow(pi,2)*C+k*structure.position.get_length())) * (alpha+structure.position.get_length()*A);

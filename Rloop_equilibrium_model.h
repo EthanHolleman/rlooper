@@ -71,6 +71,7 @@ public:
     double step_forward_bps(const vector<char>::iterator& first, const vector<char>::iterator& second);
     double compute_bps_interval(const char &first, const char &second);
     void compute_structure(vector<char>& sequence, const std::vector<char>::iterator &start, const std::vector<char>::iterator &stop, Structure& structure);
+    void compute_structure(vector<char>& sequence, const std::vector<char>::iterator &start, const std::vector<char>::iterator &stop, Structure& previous_structure, Structure& current_structure);
     void compute_residuals(Structure& structure);
     void ground_state_residuals(double& twist, double& writhe);
     long double ground_state_factor();

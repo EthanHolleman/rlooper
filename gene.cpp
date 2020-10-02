@@ -219,36 +219,6 @@ void Gene::compute_structures(Model &model){
        rloop_structures.push_back(temp);
 
     }
-
-    while (windower.has_next_window()){  // Has next window? How many windows we talkin here? *EH
-
-    
-        windower.next_window_from_all_windows(start,stop);
-        // QUESTION: Is this calculating all possible RLoop structs given a sequence? *EH
-        Structure temp;
-        //set the Loci of the structure using the gene's Loci
-        temp.position.chromosome = position.chromosome;
-        temp.position.strand = position.strand;
-        temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
-        temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
-        //pass the structure and window boundaries to the model
-
-        /* NOTE: Looks like we are computing the bounds of possible R loop
-        structures here and storing them in temp. Then we use the model object
-        passed to this function to "compute_structure" which looks like it does
-        energy calculations for the structure.
-
-        When we push back the temp structure it will have the bounds and
-        associated energies (what those energies are not exactly sure at this
-        point)
-
-        *EH
-        */
-
-        model.compute_structure(sequence,start,stop,temp);
-        //push the now computed structure onto these_structures
-        rloop_structures.push_back(temp); //need to make sure the default copy constructor is working properly
-    }
     ground_state_energy = model.ground_state_energy();  // O(1)
 }
 

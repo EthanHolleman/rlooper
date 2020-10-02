@@ -19,12 +19,16 @@ Simulation::Simulation(){
     dump = false;
     average_g = false;
     seed = 0;
+    max_window_size = 0;
 }
 
 Simulation::~Simulation(){
     for(std::vector<Gene*>::iterator it = genes.begin(); std::distance(genes.begin(),it) < genes.size(); ++it){
         delete *it; //need to test this destructor
     }
+}
+void Simulation::set_max_window_size(int window_size){
+    max_window_size = window_size;
 }
 
 void Simulation::set_infile(string infilename){
@@ -85,6 +89,10 @@ void Simulation::set_top(int n){
 
 std::vector<Model*> Simulation::get_models(){
     return models;
+}
+
+int Simulation::get_max_window_size(){
+    return max_window_size;
 }
 
 void Simulation::add_model(Model& model){

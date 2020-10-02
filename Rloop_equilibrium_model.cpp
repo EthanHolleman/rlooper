@@ -4,6 +4,8 @@
 
 #include "Rloop_equilibrium_model.h"
 #include "biophysics.h"
+
+using namespace std;
 //constructors
 Rloop_equilibrium_model::Rloop_equilibrium_model() {
 
@@ -35,7 +37,7 @@ Rloop_equilibrium_model::Rloop_equilibrium_model() {
     rUA_dAT = .28;
     rUU_dAA = .8;
     homopolymer_override = false;
-    unconstrained = false;
+    unconstrained = false;  // changed to true to test additive theory
     override_energy = 0.0;
 }
 
@@ -127,6 +129,8 @@ int Rloop_equilibrium_model::find_distance(vector<char>& sequence, const std::ve
 double Rloop_equilibrium_model::step_forward_bps(const vector<char>::iterator& first, const vector<char>::iterator& second){
     char b_0 = *first;
     char b_1 = *second;
+
+    //cout << b_0 << " " << b_1 << endl;
     double I_0;
 
     I_0 = compute_bps_interval(b_0, b_1); //need to verify this is the correct treatment of each interval
@@ -193,7 +197,7 @@ void Rloop_equilibrium_model::compute_structure(vector<char>& sequence, const st
     long int m = find_distance(sequence,start,stop,structure); //need to make boundary aware, draw this value from windower
     //compute the superhelicity term
     if (!unconstrained) {
-        structure.free_energy = (2 * pow(M_PI, 2) * C * k * pow((alpha + m * A), 2)) / (4 * pow(M_PI, 2) * C + k * m);
+        structure.constrained_energy = (2 * pow(M_PI, 2) * C * k * pow((alpha + m * A), 2)) / (4 * pow(M_PI, 2) * C + k * m);
     }
     //compute the base-pairing energy in a loop over the sequence in the boundary
     for (b_0=start; b_0 != stop; b_0++){
@@ -201,24 +205,40 @@ void Rloop_equilibrium_model::compute_structure(vector<char>& sequence, const st
             b_0 = sequence.begin();
         }
         structure.free_energy += step_forward_bps(b_0,b_0+1);
+        structure.free_energy += structure.constrained_energy;
     }
     structure.boltzmann_factor = compute_boltzmann_factor(structure.free_energy,T);
 }
 
 void Rloop_equilibrium_model::compute_structure(vector<char>& sequence, const std::vector<char>::iterator &start, const std::vector<char>::iterator &stop, Structure& previous_structure, Structure& current_structure){
     std::vector<char>::iterator b_0;
+
+    // if not unconstrained which is default which is dependend on the length
+    // of the sequence so would need to calculate for the previous seq
+    // subtract it from the previous free energy
+    // recalculate for the currrent seq and then add that plus the free
+    // energy from the previous seq to the new free energy value
+
+
+
     //get boundaries of the sequence for this structure
     long int m = find_distance(sequence, start, stop, current_structure); //need to make boundary aware, draw this value from windower
     //compute the superhelicity term
     if (!unconstrained) {
-        current_structure.free_energy = (2 * pow(M_PI, 2) * C * k * pow((alpha + m * A), 2)) / (4 * pow(M_PI, 2) * C + k * m);
+        current_structure.constrained_energy = (2 * pow(M_PI, 2) * C * k * pow((alpha + m * A), 2)) / (4 * pow(M_PI, 2) * C + k * m);
     }
     //compute the base-pairing energy in a loop over the sequence in the boundary
 
     // get last two bases of the current structure *EH
-
-    current_structure.free_energy = previous_structure.free_energy + step_forward_bps(stop-1, stop); // need two character iterators here
-
+    //cout << previous_structure.position.end_pos << " previous end postion" << "\n";
+    //cout << sequence[previous_structure.position.end_pos] << endl;
+    //cout << previous_structure.position.end_pos << " " << current_structure.position.end_pos << " Structure end positions" << endl;
+    //cout << *(stop -1) << " " << *stop << " Stop positions" << endl; 
+    //cout << sequence[current_structure.position.end_pos - 2] << " " << sequence[current_structure.position.end_pos-1] << "sequences" << endl;
+    //cout << previous_structure.free_energy << endl;
+    current_structure.free_energy = (previous_structure.free_energy - previous_structure.constrained_energy) + step_forward_bps(stop-1, stop); // need two character iterators here
+    current_structure.free_energy += current_structure.constrained_energy;
+    
     current_structure.boltzmann_factor = compute_boltzmann_factor(current_structure.free_energy,T);
 }
 

@@ -3,6 +3,7 @@
 //
 
 #include "gene.h"
+#include <thread>
 
 //constructors
 using namespace std;
@@ -156,15 +157,134 @@ void Gene::print_gene(){
 }
 
 
+void Gene::threaded_compute_structures(int block_start, int block_end, int number_threads){
+// block start and end define what section this thread is responsible for
+// calculating
+    // for i in range(block start, end) iterate over block of vector
+        *i // pointer to the structure
+    //calculate the first structure to get us going
+    // then enter the loop to dynamically calculate the rest in theory would
+    // not need to check because the blocks should define the dynamic
+    // programming boundry
+
+    //std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
+    // may need to make a sequence iterator that is offset by the block start
+    // and stop so that could mean calculating the "reach" of the block
+    // looking at the end position of the first and last structures in the block
+
+
+
+    // need to create threads first
+    int number_of_blocks = rloop_structures.back().block_id;
+    // number of blocks that need to be distributed amoung the threads
+    // ideally in a continous fashion
+
+    // want to create vectors of pointers or just have them access regions of
+    // that are defined by the blocks
+
+    // need to figure out what the start and stop is for each
+    // interactor from the rloop structure vector that gets passed to the
+    // compute in each thread I think would work best
+    // then everything would stay in place no worries about ordering because
+    // the threads are just modifying the values of the objects stored in
+    // the rloop structure vector
+
+
+    std::vector<thread> thread_pool;
+    for (int i; i < number_threads; i++){
+
+        // need to figure out the chucks here and what chuncks will
+        // be added to each thread
+        // the block needs to be calculated first so iteration pointers can
+        // be passed to be 
+
+        thread_pool.emplace_back(
+            compute_structures,
+            args,
+            args,
+            args
+        )
+    }
+    for (auto% t : thread_pool){
+        t.join();
+    }
+
+}
+
+void Gene::compute_blocked_structures(Model $model, structure_start, structure_stop, seq_start,){
+
+    // the sequence is not directly connected to the structures which is
+    // kind of annoying
+
+    start = sequence.start() + *structure.position.start_pos
+    end = sequence.end() + length of sequence which different for circular DNA
+
+    model.compute_structure(sequence,start,stop,first_structure);
+
+    model.compute_structure(*structure_start)
+
+
+
+
+}
+
+void Gene::create_structures(Model &model){
+
+    std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
+    windower.reset_window();
+    int block_counter = 0
+
+    windower.next_window_from_all_windows(start,stop);
+    Structure first_structure;
+    first_structure.position.chromosome = position.chromosome;
+    first_structure.position.strand = position.strand;
+    first_structure.position.start_pos = position.start_pos + windower.get_current_start_offset();
+    first_structure.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+    rloop_structures.push_back(first_structure);
+
+    // add the first structure to get going
+
+    while (windower.has_next_window()){
+
+        block_counter += windower.next_window_from_all_windows(start,stop);
+        // will only be one when entering a new block
+
+        Structure temp;
+        temp.position.chromosome = position.chromosome;
+        temp.position.strand = position.strand;
+        temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
+        temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+        temp.block_id = block_counter;  // need to add this attribute to structure
+
+        rloop_structures.push_back(temp);
+
+        
+       // cout << temp.position.start_pos << " " << temp.position.end_pos << endl;
+        // do not compute the structure yet only create the structures
+        // if (flag == 1){  // Structure is being built from new start site
+        //     // is a parent structure so do things normally
+        //     model.compute_structure(sequence,start,stop,temp);
+        // }
+        // else{
+        //     // compute free energy and boltz using the previous structure
+        //     model.compute_structure(sequence,start,stop,rloop_structures.back(), temp);
+        // }      
+}
+
+
 void Gene::compute_structures(Model &model){
+
+    // if positive strand is revesed at this point
+
     vector<char> temp_circular_sequence;
     if (sequence.size() == 0){
         //throw exception
     }
     //initializing the iterators ensures that the intial comparison in next_window_from_all_windows is not problematic
     std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
+    // would need to do this for each thread
     windower.reset_window();
-
     // Get things rolling by doing first calculation outside of the loop    
     windower.next_window_from_all_windows(start,stop);
     Structure first_structure;
@@ -172,6 +292,10 @@ void Gene::compute_structures(Model &model){
     first_structure.position.strand = position.strand;
     first_structure.position.start_pos = position.start_pos + windower.get_current_start_offset();
     first_structure.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+
+    //cout << *start << endl;
+    //cout << *stop << endl;
 
     model.compute_structure(sequence,start,stop,first_structure);
 
@@ -187,7 +311,9 @@ void Gene::compute_structures(Model &model){
         temp.position.strand = position.strand;
         temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
         temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
-
+        
+       // cout << temp.position.start_pos << " " << temp.position.end_pos << endl;
+        
         if (flag == 1){  // Structure is being built from new start site
             // is a parent structure so do things normally
             model.compute_structure(sequence,start,stop,temp);
@@ -220,35 +346,6 @@ void Gene::compute_structures(Model &model){
 
     }
 
-    while (windower.has_next_window()){  // Has next window? How many windows we talkin here? *EH
-
-    
-        windower.next_window_from_all_windows(start,stop);
-        // QUESTION: Is this calculating all possible RLoop structs given a sequence? *EH
-        Structure temp;
-        //set the Loci of the structure using the gene's Loci
-        temp.position.chromosome = position.chromosome;
-        temp.position.strand = position.strand;
-        temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
-        temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
-        //pass the structure and window boundaries to the model
-
-        /* NOTE: Looks like we are computing the bounds of possible R loop
-        structures here and storing them in temp. Then we use the model object
-        passed to this function to "compute_structure" which looks like it does
-        energy calculations for the structure.
-
-        When we push back the temp structure it will have the bounds and
-        associated energies (what those energies are not exactly sure at this
-        point)
-
-        *EH
-        */
-
-        model.compute_structure(sequence,start,stop,temp);
-        //push the now computed structure onto these_structures
-        rloop_structures.push_back(temp); //need to make sure the default copy constructor is working properly
-    }
     ground_state_energy = model.ground_state_energy();  // O(1)
 }
 

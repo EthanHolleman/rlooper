@@ -138,6 +138,7 @@ bool Gene::read_gene(ifstream& fastafile) { //need to test
         }
             //else the charicter is unrecognized
         else {
+            cout << c << endl;
             throw InvalidSequenceDataException(c);
         }
     }
@@ -153,6 +154,53 @@ void Gene::print_gene(){
         cout << *it;
     }
     std::cout << std::endl;
+}
+
+void Gene::compute_structures(Model &model, int max_window_size){
+    vector<char> temp_circular_sequence;
+    if (sequence.size() == 0){
+        //throw exception
+    }
+    //initializing the iterators ensures that the intial comparison in next_window_from_all_windows is not problematic
+    std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
+    std::vector<char>::iterator window_stop = sequence.begin() + max_window_size;
+    windower.reset_window();
+
+    // Get things rolling by doing first calculation outside of the loop    
+    windower.next_window_from_all_windows(start,stop, window_stop);
+    Structure first_structure;
+    first_structure.position.chromosome = position.chromosome;
+    first_structure.position.strand = position.strand;
+    first_structure.position.start_pos = position.start_pos + windower.get_current_start_offset();
+    first_structure.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+    model.compute_structure(sequence,start,stop,first_structure);
+
+    rloop_structures.push_back(first_structure);
+
+    int i = 0;
+    while (windower.has_next_window()){
+        int flag = windower.next_window_from_all_windows(start,stop, window_stop);
+
+        Structure temp;
+        temp.position.chromosome = position.chromosome;
+        temp.position.strand = position.strand;
+        temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
+        temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+        if (flag == 1){  // Structure is being built from new start site
+            // is a parent structure so do things normally
+            model.compute_structure(sequence,start,stop,temp);
+        }
+        else{
+            // compute free energy and boltz using the previous structure
+            model.compute_structure(sequence,start,stop,rloop_structures.back(), temp);
+        }
+       
+       rloop_structures.push_back(temp);
+
+    }
+    ground_state_energy = model.ground_state_energy();  // O(1)
 }
 
 
@@ -196,26 +244,7 @@ void Gene::compute_structures(Model &model){
             // compute free energy and boltz using the previous structure
             model.compute_structure(sequence,start,stop,rloop_structures.back(), temp);
         }
-        // cout << "Got one here by guy " << i << endl;
-        // cout << temp.free_energy << endl;
-        // cout << temp.position.start_pos << endl;
-        // cout << temp.position.end_pos << endl;
-        // i ++;
-
-
-        // here need to do the actual calculations by refering to the last
-        // structures in some way
-        // how do we want to do that by the way is the though thing
-
-        // need to compute the first structure in this section of structs
-        // and then can use that one to calculate the rest
-
-        /*
-        if current_boltz and current_free energy are 0:
-            Means we started a new block (need signal for that)
-            Create the first structure like normal
-            Compute all other structures from the first one
-        */
+       
        rloop_structures.push_back(temp);
 
     }

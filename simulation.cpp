@@ -496,7 +496,13 @@ void Simulation::simulation_A(){ //some of this code might be migrated into new 
             this_gene->compute_structures_circular(*models[0]);
         }
         else{
-            this_gene->compute_structures(*models[0]);
+
+            if(max_window_size > 1){
+                this_gene->compute_structures(*models[0], max_window_size);
+            }
+            else{
+                this_gene->compute_structures(*models[0]);
+            }
         }
         //ensemble analysis, free energies and boltzmann factors have already been computed in compute_structures
         //compute partition function

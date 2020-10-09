@@ -65,6 +65,8 @@ public:
      */
     void compute_structures(Model& model);
 
+    void compute_structures(Model& model, int max_window_size);
+
     /**
      * computes residual twist and superhelicity for the ensemble
      */

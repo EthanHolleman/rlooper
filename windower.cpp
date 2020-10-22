@@ -58,30 +58,85 @@ bool Windower::has_next_window_circular(){
         return true;
 }
 
-void Windower::next_window_from_all_windows(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
+int Windower::next_window_from_all_windows(std::vector<char>::iterator& start,
+                                           std::vector<char>::iterator& stop,
+                                           std::vector<char>::iterator& window_stop){
     //if (!has_next_window()){ //safety check to make sure the next window exists
     //    throw WindowerException(); //throw exception?
     //}
+    int flag = 0;
     if (is_circular){
         return next_window_from_all_windows_circular(start,stop);
+        // need to add a circular method
     }
-    if (stop < current_sequence->end()-1){
+    //cout << distance(current_sequence->begin(), current_start) << "-" << distance(current_sequence->begin(), current_stop) << endl;
+    if (stop < current_sequence->end() - 1 && stop < window_stop-1){
         ++current_stop;
     }
-    else{ //if (start < current_sequence->end()-min_window_size){
+    else{
         ++current_start;
         current_stop = current_start + min_window_size-1;
+        ++window_stop;  // move window ahead by 1 as well
+
     }
     start = current_start;
     stop = current_stop;
-    //print_current_window();
-    return;
+    return flag;
 }
 
-void Windower::next_window_from_all_windows_circular(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
+//change function type to return int *EH
+int Windower::next_window_from_all_windows(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
     //if (!has_next_window()){ //safety check to make sure the next window exists
     //    throw WindowerException(); //throw exception?
     //}
+    int flag = 0;
+    if (is_circular){
+        return next_window_from_all_windows_circular(start,stop);
+    }
+    //cout << distance(current_sequence->begin(), current_start) << "-" << distance(current_sequence->begin(), current_stop) << endl;
+    if (stop < current_sequence->end()-1){  // Move the end further along but keep same start *EH
+        ++current_stop;
+
+        // flag that we have not yet moved to new block
+    }
+    else{ //if (start < current_sequence->end()-min_window_size){
+        // We hit the current stop so we need to increment the start by one
+        // And move the next stop by 1 min_window_size unit along the sequence
+        ++current_start;
+        current_stop = current_start + min_window_size-1;
+        flag = 1;
+    }
+    start = current_start;
+    stop = current_stop;
+    return flag;
+    //print_current_window();
+
+    /*
+    Think the above looks something like this
+    min_window_size = 3
+    start = 0 
+    stop = 2 (min_window_size - 1)
+    1. | A B C | D E
+    Increment current_stop (stop)
+    stop = 3
+    2. | A B C D | E
+    Increment current_stop (stop)
+    stop = 4
+    3. | A B C D E |
+    Increment current start
+    start = 1
+    stop = start (1) + min_window_size (3) -1 = 3
+    4. A | B C D | E
+    ...
+    *EH 
+    */
+}
+
+int Windower::next_window_from_all_windows_circular(std::vector<char>::iterator& start, std::vector<char>::iterator& stop){
+    //if (!has_next_window()){ //safety check to make sure the next window exists
+    //    throw WindowerException(); //throw exception?
+    //}
+    int flag = 0;
     if (current_window_size < sequence_size){ //sequence length has not been reached
         if (current_stop == current_sequence->end()-1){ //boundary condition
             current_stop = current_sequence->begin();
@@ -101,8 +156,9 @@ void Windower::next_window_from_all_windows_circular(std::vector<char>::iterator
     }
     start = current_start;
     stop = current_stop;
+    flag = 1;
     //print_current_window();
-    return;
+    return flag;
 }
 
 long int Windower::get_current_start_offset(){

@@ -3,6 +3,7 @@
 //
 
 #include "gene.h"
+#include "string"
 
 //constructors
 using namespace std;
@@ -155,6 +156,77 @@ void Gene::print_gene(){
     std::cout << std::endl;
 }
 
+// void Gene::compute_structures(Model &model){
+//     vector<char> temp_circular_sequence;
+//     if (sequence.size() == 0){
+//         //throw exception
+//     }
+//     //initializing the iterators ensures that the intial comparison in next_window_from_all_windows is not problematic
+//     std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
+//     windower.reset_window();
+//     while (windower.has_next_window()){
+//         windower.next_window_from_all_windows(start,stop);
+//         Structure temp;
+//         //set the Loci of the structure using the gene's Loci
+//         temp.position.chromosome = position.chromosome;
+//         temp.position.strand = position.strand;
+//         temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
+//         temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+//         //pass the structure and window boundaries to the model
+//         model.compute_structure(sequence,start,stop,temp);
+//         //push the now computed structure onto these_structures
+//         rloop_structures.push_back(temp); //need to make sure the default copy constructor is working properly
+//     }
+//     ground_state_energy = model.ground_state_energy();
+// }
+
+void Gene::compute_structures(Model &model, int max_window_size){
+    vector<char> temp_circular_sequence;
+    if (sequence.size() == 0){
+        //throw exception
+    }
+    //initializing the iterators ensures that the intial comparison in next_window_from_all_windows is not problematic
+    std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
+    std::vector<char>::iterator window_stop = sequence.begin() + max_window_size;
+    windower.reset_window();
+
+    // Get things rolling by doing first calculation outside of the loop    
+    windower.next_window_from_all_windows(start,stop, window_stop);
+    Structure first_structure;
+    first_structure.position.chromosome = position.chromosome;
+    first_structure.position.strand = position.strand;
+    first_structure.position.start_pos = position.start_pos + windower.get_current_start_offset();
+    first_structure.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+    model.compute_structure(sequence,start,stop,first_structure);
+
+    rloop_structures.push_back(first_structure);
+
+    int i = 0;
+    while (windower.has_next_window()){
+        int flag = windower.next_window_from_all_windows(start,stop, window_stop);
+
+        Structure temp;
+        temp.position.chromosome = position.chromosome;
+        temp.position.strand = position.strand;
+        temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
+        temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+        if (flag == 1){  // Structure is being built from new start site
+            // is a parent structure so do things normally
+            model.compute_structure(sequence,start,stop,temp);
+        }
+        else{
+            // compute free energy and boltz using the previous structure
+            model.compute_structure(sequence,start,stop,rloop_structures.back(), temp);
+        }
+       
+       rloop_structures.push_back(temp);
+
+    }
+    ground_state_energy = model.ground_state_energy();  // O(1)
+}
+
 void Gene::compute_structures(Model &model){
     vector<char> temp_circular_sequence;
     if (sequence.size() == 0){
@@ -163,20 +235,42 @@ void Gene::compute_structures(Model &model){
     //initializing the iterators ensures that the intial comparison in next_window_from_all_windows is not problematic
     std::vector<char>::iterator start = sequence.begin(),stop=sequence.begin()+1;
     windower.reset_window();
+
+    // Get things rolling by doing first calculation outside of the loop    
+    windower.next_window_from_all_windows(start,stop);
+    Structure first_structure;
+    first_structure.position.chromosome = position.chromosome;
+    first_structure.position.strand = position.strand;
+    first_structure.position.start_pos = position.start_pos + windower.get_current_start_offset();
+    first_structure.position.end_pos = position.start_pos + windower.get_current_stop_offset();
+
+    model.compute_structure(sequence,start,stop,first_structure);
+
+    rloop_structures.push_back(first_structure);
+
+    int i = 0;
     while (windower.has_next_window()){
-        windower.next_window_from_all_windows(start,stop);
+
+        int flag = windower.next_window_from_all_windows(start,stop);
+
         Structure temp;
-        //set the Loci of the structure using the gene's Loci
         temp.position.chromosome = position.chromosome;
         temp.position.strand = position.strand;
         temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
         temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
-        //pass the structure and window boundaries to the model
-        model.compute_structure(sequence,start,stop,temp);
-        //push the now computed structure onto these_structures
-        rloop_structures.push_back(temp); //need to make sure the default copy constructor is working properly
+
+        if (flag == 1){  // Structure is being built from new start site
+            // is a parent structure so do things normally
+            model.compute_structure(sequence,start,stop,temp);
+        }
+        else{
+            // compute free energy and boltz using the previous structure
+            model.compute_structure(sequence,start,stop,rloop_structures.back(), temp);
+        }
+       
+       rloop_structures.push_back(temp);
     }
-    ground_state_energy = model.ground_state_energy();
+    ground_state_energy = model.ground_state_energy();  // O(1)
 }
 
 void Gene::compute_structures_circular(Model &model){

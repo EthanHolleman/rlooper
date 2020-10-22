@@ -19,12 +19,16 @@ Simulation::Simulation(){
     dump = false;
     average_g = false;
     seed = 0;
+    max_window_size = 0;
 }
 
 Simulation::~Simulation(){
     for(std::vector<Gene*>::iterator it = genes.begin(); std::distance(genes.begin(),it) < genes.size(); ++it){
         delete *it; //need to test this destructor
     }
+}
+void Simulation::set_max_window_size(int window_size){
+    max_window_size = window_size;
 }
 
 void Simulation::set_infile(string infilename){
@@ -87,6 +91,10 @@ std::vector<Model*> Simulation::get_models(){
     return models;
 }
 
+int Simulation::get_max_window_size(){
+    return max_window_size;
+}
+
 void Simulation::add_model(Model& model){
     models.push_back(&model);
 }
@@ -102,6 +110,10 @@ void Simulation::compute_signal_bpprobs(Gene &gene, vector<double> *&signal){
              i < it->position.end_pos - gene.getPosition().start_pos; i++) {
             (*signal)[i] += it->probability;
         }
+        // looks like the probablity of each position is the the sum of probs
+        // across all the structures
+
+
 
     }
     //if strand is -, reverse bp_probabilities
@@ -457,16 +469,16 @@ void Simulation::simulation_A(){ //some of this code might be migrated into new 
     write_bedfile_header(outfile5,"signal3_peaks_"+outfilename);
 
     bool eof = false;
-    if (models.size() < 1){
+    if (models.size() < 1){  // models is vector, could have multible models *EH
         //throw exception
     }
-    //do while !eof
+    //do while !eof  QUESTION: What is eof stand for in this context? *EH
     while(eof == false) {
-        //allocate new gene
+        //allocate new gene QUESTION: Are gene objects really genes always or interesting loci? *EH
         Gene *this_gene = new Gene();
-        this_gene->windower.set_min_window_size(minlength);
+        this_gene->windower.set_min_window_size(minlength);  //QUESTION Why are we accessing through a pointer? *EH
         //read gene
-        eof = this_gene->read_gene(infile);
+        eof = this_gene->read_gene(infile);  //NOTE: Gene is really just a fasta record in the infile *EH
         cout << "processing gene: " << this_gene->getName() << "...";
         //compute structures using models
         if (auto_domain_size){
@@ -488,25 +500,37 @@ void Simulation::simulation_A(){ //some of this code might be migrated into new 
             this_gene->compute_structures_circular(*models[0]);
         }
         else{
-            this_gene->compute_structures(*models[0]);
+
+            if(max_window_size > 1){
+                this_gene->compute_structures(*models[0], max_window_size);
+            }
+            else{
+                this_gene->compute_structures(*models[0]);
+            }
         }
         //ensemble analysis, free energies and boltzmann factors have already been computed in compute_structures
         //compute partition function
         long double partition_function = 0;
         long double sanity_check = 0;
-        for (vector<Structure>::iterator it = this_gene->getStructures().begin();
+        for (vector<Structure>::iterator it = this_gene->getStructures().begin(); // for each structure
              it < this_gene->getStructures().end(); ++it){
-               partition_function += it->boltzmann_factor;
+               partition_function += it->boltzmann_factor;  // sum of all boltzman factors stored in partition function
         }
-        partition_function += models[0]->ground_state_factor();
+        partition_function += models[0]->ground_state_factor(); // add the ground state factor 
         //compute boltzmann weights and store in the structures
         for (vector<Structure>::iterator it = this_gene->getStructures().begin();
              it < this_gene->getStructures().end(); ++it){
-            it->probability = it->boltzmann_factor/partition_function;
+            it->probability = it->boltzmann_factor/partition_function;  // this is determining base pair probability at each base?
+            // so sum should be pretty close to one in theory since partition function is
+            // the sum of all boltzman_factors for all strucctures plus you add a little but
+
+            // this is giving the structural's probability how do we get to just
+            // the base pair based probability 
             sanity_check += it->boltzmann_factor/partition_function;
         }
         sanity_check += models[0]->ground_state_factor()/partition_function;
         cout << "P(ground state)= " << models[0]->ground_state_factor()/partition_function << endl;
+        // what is the ground state factor representing here
         if (fabs(1-sanity_check) > .00001){
             throw SimulationException("Ensemble probability sum != 1"); //this throw is uncaught
         }

@@ -56,6 +56,8 @@ public:
      * useful for debugging. Prints the header and the sequence stored in the current gene.
      */
     void print_gene();
+
+    void compute_structures(Model &model, int max_window_size);
     
     void compute_structures_circular(Model& model);
 

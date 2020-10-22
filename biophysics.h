@@ -15,6 +15,9 @@
 //globally relevant biophysics related functions.
 long double compute_boltzmann_factor(double E, double T){
     return exp(-1*E/(R*T));
+
+    // boltzman is negative energy / R * T which is then divided by
+    // the partition function later on so I think higher 
 }
 
 

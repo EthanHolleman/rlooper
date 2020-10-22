@@ -37,10 +37,11 @@ public:
     double probability;
     double residual_twist;
     double residual_linking_difference;
+    double constrained_energy;
     //operators
     bool operator<(const Structure &rhs) const { return free_energy < rhs.free_energy; } //overloaded < operator for sorting
     //constructors
-    Structure(): free_energy(0.), boltzmann_factor(0.), probability(0.), residual_twist(0.), residual_linking_difference(0.) {}
+    Structure(): free_energy(0.), boltzmann_factor(0.), probability(0.), residual_twist(0.), residual_linking_difference(0.), constrained_energy(0.){}
     Structure(Loci, float, float, float);
 };
 

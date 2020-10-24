@@ -3,7 +3,7 @@
 //
 
 #include "gene.h"
-#include "string"
+#include <string>
 
 //constructors
 using namespace std;
@@ -211,7 +211,6 @@ void Gene::compute_structures(Model &model, int max_window_size){
         temp.position.strand = position.strand;
         temp.position.start_pos = position.start_pos + windower.get_current_start_offset();
         temp.position.end_pos = position.start_pos + windower.get_current_stop_offset();
-
         if (flag == 1){  // Structure is being built from new start site
             // is a parent structure so do things normally
             model.compute_structure(sequence,start,stop,temp);

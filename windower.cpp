@@ -64,11 +64,14 @@ int Windower::next_window_from_all_windows(std::vector<char>::iterator& start,
     //if (!has_next_window()){ //safety check to make sure the next window exists
     //    throw WindowerException(); //throw exception?
     //}
+    
     int flag = 0;
     if (is_circular){
         return next_window_from_all_windows_circular(start,stop);
         // need to add a circular method
     }
+    //window stop is giving the correct distances it looks like but for some
+    //reason everything gets concentrated in the front
     //cout << distance(current_sequence->begin(), current_start) << "-" << distance(current_sequence->begin(), current_stop) << endl;
     if (stop < current_sequence->end() - 1 && stop < window_stop-1){
         ++current_stop;
@@ -77,6 +80,7 @@ int Windower::next_window_from_all_windows(std::vector<char>::iterator& start,
         ++current_start;
         current_stop = current_start + min_window_size-1;
         ++window_stop;  // move window ahead by 1 as well
+        flag = 1;
 
     }
     start = current_start;

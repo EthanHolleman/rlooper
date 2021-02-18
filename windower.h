@@ -36,9 +36,18 @@ public:
 
     bool has_next_window_circular();
 
-    void next_window_from_all_windows(std::vector<char>::iterator& start, std::vector<char>::iterator& stop);
+    int next_window_from_all_windows(std::vector<char>::iterator& start, std::vector<char>::iterator& stop);
 
-    void next_window_from_all_windows_circular(std::vector<char>::iterator& start, std::vector<char>::iterator& stop);
+    int next_window_from_all_windows(std::vector<char>::iterator& start,
+                                           std::vector<char>::iterator& stop,
+                                           int max_window_size,
+                                           int window_count);
+
+    int next_window_from_all_windows(std::vector<char>::iterator& start,
+                                           std::vector<char>::iterator& stop,
+                                           std::vector<char>::iterator& window_stop);
+
+    int next_window_from_all_windows_circular(std::vector<char>::iterator& start, std::vector<char>::iterator& stop);
 
     void next_sliding_window(std::vector<char>::iterator& start, std::vector<char>::iterator& stop);
 

@@ -9,7 +9,9 @@ int main(int argc, char* argv[]) {
     Simulation sim;
     Rloop_equilibrium_model model;
     bool sandbox = false;
+
     //process command line arguments
+
     sim.set_infile(argv[1]);
     sim.set_outfile(argv[2]);
     for (int i=3; i<argc; i++) {
@@ -78,6 +80,11 @@ int main(int argc, char* argv[]) {
         else if (!strcmp(argv[i], "--localaverageenergy")) {
             sim.set_average_g(true);
         }
+        else if (!strcmp(argv[i], "--maxwindowsize")){
+            sim.set_max_window_size(atoi(argv[i+1]));  // add max window size argument *EH 
+            i ++;
+        }
+
         else{
             cout << "Unrecognized command line option: " << argv[i] << endl;
             exit(1);
